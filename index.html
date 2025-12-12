@@ -3,464 +3,808 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>打字雨 Typing Rain</title>
+  <title>打字雨 · 多模式 Typing Rain</title>
   <style>
-    html, body { height: 100%; margin: 0; background:#0b1020; color:#e8ecff; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", Arial; }
-    #wrap { display:flex; flex-direction:column; height:100%; }
-    header {
+    :root{
+      --bg:#0b1020;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.10);
+      --line:rgba(255,255,255,.12);
+      --txt:#e8ecff;
+      --muted:rgba(232,236,255,.75);
+      --good:#2de38a;
+      --bad:#ff4d6d;
+      --warn:#ffd166;
+      --shadow:0 20px 80px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1200px 700px at 20% 10%, rgba(122,98,255,.25), transparent 60%),
+              radial-gradient(1000px 600px at 80% 0%, rgba(45,227,138,.18), transparent 55%),
+              radial-gradient(800px 500px at 70% 90%, rgba(255,209,102,.10), transparent 60%),
+              var(--bg);
+      color:var(--txt); font-family:var(--sans);
+      overflow:hidden;
+    }
+    #wrap{height:100%; display:flex; flex-direction:column;}
+    header{
       display:flex; align-items:center; justify-content:space-between;
-      padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      backdrop-filter: blur(8px);
     }
-    .left { display:flex; gap:10px; align-items:center; }
-    .pill {
-      padding:6px 10px; border:1px solid rgba(255,255,255,.12);
-      border-radius:999px; background:rgba(255,255,255,.06);
-      font-size:13px;
+    .left{display:flex; gap:10px; align-items:center; min-width:0;}
+    .brand{
+      display:flex; align-items:center; gap:10px; min-width:0;
+      padding:8px 10px; border:1px solid var(--line); border-radius:999px;
+      background:var(--panel);
     }
-    .btn {
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background:var(--good);
+      box-shadow:0 0 0 6px rgba(45,227,138,.10);
+      flex:0 0 auto;
+    }
+    .title{font-weight:800; letter-spacing:.4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .sub{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .chips{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+    .chip{
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px; border:1px solid var(--line); border-radius:999px;
+      background:var(--panel);
+      font-size:12px; color:var(--muted);
+    }
+    .chip b{color:var(--txt)}
+    .btn{
       cursor:pointer; user-select:none;
-      padding:8px 12px; border-radius:10px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.08);
-      color:#e8ecff; font-weight:600;
+      padding:8px 12px; border-radius:12px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--txt);
+      font-weight:700;
+      transition: transform .08s ease, background .15s ease;
+      display:inline-flex; align-items:center; gap:8px;
     }
-    .btn:hover { background:rgba(255,255,255,.12); }
-    .btn:active { transform: translateY(1px); }
-    main { position:relative; flex:1; overflow:hidden; }
-    canvas { width:100%; height:100%; display:block; }
-    #overlay {
-      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,.35); backdrop-filter: blur(4px);
+    .btn:hover{background:var(--panel2)}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color:rgba(45,227,138,.35);
+      background:linear-gradient(180deg, rgba(45,227,138,.16), rgba(255,255,255,.06));
     }
-    .card {
-      width:min(520px, calc(100% - 24px));
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.08);
-      box-shadow: 0 20px 80px rgba(0,0,0,.35);
+    .btn.danger{
+      border-color:rgba(255,77,109,.35);
+      background:linear-gradient(180deg, rgba(255,77,109,.14), rgba(255,255,255,.06));
+    }
+    main{position:relative; flex:1; overflow:hidden;}
+    canvas{width:100%; height:100%; display:block;}
+    #hud{
+      position:absolute; inset:auto 12px 12px 12px;
+      display:flex; gap:10px; align-items:flex-end; justify-content:space-between;
+      pointer-events:none;
+    }
+    .panel{
+      pointer-events:auto;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      backdrop-filter: blur(10px);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:10px 12px;
+    }
+    .inputRow{display:flex; gap:8px; align-items:center;}
+    .input{
+      width:min(520px, 62vw);
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.20);
+      color:var(--txt);
+      outline:none;
+      font-family:var(--mono);
+      font-size:14px;
+    }
+    .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.25}
+    .kbd{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:2px 6px;
+      border:1px solid rgba(255,255,255,.18);
+      border-bottom-color: rgba(255,255,255,.28);
+      border-radius:8px;
+      background:rgba(255,255,255,.06);
+      color:var(--txt);
+    }
+    #overlay{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.38);
+      backdrop-filter: blur(10px);
       padding:18px;
     }
-    .card h1 { margin:0 0 6px; font-size:22px; letter-spacing:.5px; }
-    .card p { margin:0 0 12px; opacity:.9; line-height:1.55; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    label { font-size:13px; opacity:.9; }
-    input[type="range"] { width:180px; }
-    kbd {
-      padding:2px 6px; border-radius:6px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.08);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:12px;
+    .card{
+      width:min(860px, 100%);
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      box-shadow:var(--shadow);
+      padding:16px;
     }
-    footer {
-      padding:10px 16px; border-top:1px solid rgba(255,255,255,.08);
-      font-size:12px; opacity:.85;
-      display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    .cardTop{display:flex; gap:12px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap}
+    .card h1{margin:0; font-size:22px; letter-spacing:.6px}
+    .card p{margin:8px 0 0; color:var(--muted); line-height:1.5}
+    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:12px; margin-top:12px}
+    @media (max-width:860px){ .grid{grid-template-columns:1fr;}}
+    .box{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      background:rgba(0,0,0,.18);
+      padding:12px;
     }
-    .warn { color:#ffd1d1; }
+    .box h3{margin:0 0 10px; font-size:14px; color:var(--muted); letter-spacing:.3px}
+    .modes{display:flex; flex-wrap:wrap; gap:10px}
+    .modeBtn{
+      flex:1;
+      min-width:210px;
+      text-align:left;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+    }
+    .modeBtn:hover{background:rgba(255,255,255,.09)}
+    .modeBtn:active{transform: translateY(1px)}
+    .modeName{font-weight:800}
+    .modeDesc{margin-top:6px; font-size:12px; color:var(--muted); line-height:1.35}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    label{font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px}
+    input[type="range"]{width:200px}
+    .statline{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+    .pill{
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      font-size:12px; color:var(--muted);
+    }
+    .pill b{color:var(--txt)}
+    .rightActions{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    .tiny{font-size:12px; color:var(--muted)}
+    .sep{height:1px; background:rgba(255,255,255,.10); margin:10px 0}
+    .toast{
+      position:absolute; top:14px; right:14px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow:var(--shadow);
+      opacity:0; transform: translateY(-6px);
+      transition: opacity .2s ease, transform .2s ease;
+      pointer-events:none;
+      max-width:min(420px, 92vw);
+      color:var(--txt);
+    }
+    .toast.show{opacity:1; transform: translateY(0)}
+    .toast .t{font-weight:800}
+    .toast .d{margin-top:4px; font-size:12px; color:var(--muted); line-height:1.35}
   </style>
 </head>
 <body>
 <div id="wrap">
   <header>
     <div class="left">
-      <div class="pill">分数：<span id="score">0</span></div>
-      <div class="pill">连击：<span id="combo">0</span></div>
-      <div class="pill">生命：<span id="life">10</span></div>
-      <div class="pill">等级：<span id="level">1</span></div>
+      <div class="brand">
+        <span class="dot" id="statusDot"></span>
+        <div style="min-width:0">
+          <div class="title">打字雨 · 多版本</div>
+          <div class="sub" id="subTitle">支持：英文 / 中文单字 / 烘焙词库（可切换）</div>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip">模式：<b id="modeLabel">未开始</b></div>
+        <div class="chip">分数：<b id="scoreLabel">0</b></div>
+        <div class="chip">连击：<b id="comboLabel">0</b></div>
+        <div class="chip">生命：<b id="lifeLabel">3</b></div>
+      </div>
     </div>
-    <div class="left">
-      <button class="btn" id="pauseBtn">暂停</button>
-      <button class="btn" id="resetBtn">重开</button>
+    <div class="rightActions">
+      <button class="btn" id="btnMode">选择版本</button>
+      <button class="btn" id="btnPause"><span>⏸</span>暂停</button>
+      <button class="btn danger" id="btnReset"><span>↻</span>重开</button>
+      <button class="btn primary" id="btnStart"><span>▶</span>开始</button>
     </div>
   </header>
 
   <main>
-    <canvas id="c"></canvas>
+    <canvas id="cv"></canvas>
+
+    <div id="hud">
+      <div class="panel">
+        <div class="inputRow">
+          <input id="input" class="input" placeholder="在这里输入：英文直接打；中文用输入法，回车确认" autocomplete="off" spellcheck="false" />
+          <button class="btn primary" id="btnEnter">确认</button>
+        </div>
+        <div class="hint" id="hint">
+          快捷键：<span class="kbd">Space</span> 暂停/继续，
+          <span class="kbd">R</span> 重开，
+          <span class="kbd">M</span> 选择版本。
+          中文模式：建议输入后按 <span class="kbd">Enter</span>。
+        </div>
+      </div>
+
+      <div class="panel" style="min-width:240px">
+        <div class="pill">命中：<b id="hitLabel">0</b>　漏掉：<b id="missLabel">0</b></div>
+        <div class="pill" style="margin-top:8px">速度：<b id="spdLabel">1.0x</b>　密度：<b id="densLabel">1.0x</b></div>
+        <div class="pill" style="margin-top:8px">趣味：<b id="funLabel">🎯 精准命中加分</b></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">
+      <div class="t" id="toastT">提示</div>
+      <div class="d" id="toastD">内容</div>
+    </div>
 
     <div id="overlay">
       <div class="card">
-        <h1>打字雨 Typing Rain</h1>
-        <p>
-          字母会从天上掉下来，在落地前按下对应字母即可消除并得分。<br/>
-          <span class="warn">注意：</span>必须用英文键盘输入（A-Z），不区分大小写。
-        </p>
-
-        <div class="row" style="margin:10px 0 6px;">
-          <label>难度（掉落速度）：<span id="spdLabel">1.0x</span></label>
-          <input id="speed" type="range" min="6" max="20" value="10" />
-        </div>
-        <div class="row" style="margin:0 0 14px;">
-          <label>密度（生成频率）：<span id="rateLabel">中</span></label>
-          <input id="rate" type="range" min="200" max="900" value="520" />
+        <div class="cardTop">
+          <div>
+            <h1>选择你的版本：打字雨怎么玩</h1>
+            <p>
+              你可以随时切换版本（<span class="kbd">M</span>），同一个页面里玩英文、中文单字或「烘焙甲方词库」。
+              命中会加分、连击会加速加分；漏掉会扣生命。
+            </p>
+          </div>
+          <div class="rightActions">
+            <span class="tiny">提示：想更像“甲方烘焙”就选 <b>烘焙词雨</b></span>
+          </div>
         </div>
 
-        <div class="row">
-          <button class="btn" id="startBtn">开始</button>
-          <span class="pill">快捷键：<kbd>Space</kbd> 暂停 / <kbd>R</kbd> 重开</span>
+        <div class="grid">
+          <div class="box">
+            <h3>版本选择</h3>
+            <div class="modes">
+              <button class="modeBtn" data-mode="EN_LETTERS">
+                <div class="modeName">英文 · 字母雨</div>
+                <div class="modeDesc">最经典：A–Z 掉落。适合热身、练反应。</div>
+              </button>
+
+              <button class="modeBtn" data-mode="ZH_CHARS">
+                <div class="modeName">中文 · 单字雨</div>
+                <div class="modeDesc">随机常用汉字掉落。适合练“中文输入法手感”。</div>
+              </button>
+
+              <button class="modeBtn" data-mode="BAKERY_WORDS">
+                <div class="modeName">烘焙甲方 · 词雨（推荐）</div>
+                <div class="modeDesc">产品/原料/门店/运营词库。更像品牌练打字，还更有梗。</div>
+              </button>
+            </div>
+
+            <div class="sep"></div>
+
+            <h3>难度 & 趣味设置</h3>
+            <div class="row">
+              <label>速度 <input id="rngSpeed" type="range" min="0.6" max="2.2" step="0.1" value="1.0" /></label>
+              <label>密度 <input id="rngDensity" type="range" min="0.6" max="2.2" step="0.1" value="1.0" /></label>
+              <label>生命 <input id="rngLives" type="range" min="1" max="8" step="1" value="3" /></label>
+            </div>
+
+            <div class="statline">
+              <div class="pill">连击越高：掉落越快，得分越多</div>
+              <div class="pill">命中长词：额外奖励</div>
+              <div class="pill">漏掉：扣生命 + 清空连击</div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h3>操作提示</h3>
+            <div class="pill"><b>英文模式：</b>直接打字母，自动命中</div>
+            <div class="pill" style="margin-top:8px"><b>中文模式：</b>用中文输入法输入后按 <b>Enter</b> 或点“确认”</div>
+            <div class="pill" style="margin-top:8px"><b>随时切换：</b><span class="kbd">M</span> 或顶部「选择版本」</div>
+            <div class="pill" style="margin-top:8px"><b>暂停/继续：</b><span class="kbd">Space</span></div>
+            <div class="pill" style="margin-top:8px"><b>重开：</b><span class="kbd">R</span></div>
+            <div class="sep"></div>
+            <button class="btn primary" id="btnGo">开始（用当前选择）</button>
+            <button class="btn" id="btnClose">先看看</button>
+          </div>
         </div>
       </div>
     </div>
   </main>
-
-  <footer>
-    <div>玩法小技巧：优先打“最低”的字母，保持连击会加分。</div>
-    <div>Made for you ✨</div>
-  </footer>
 </div>
 
 <script>
 (() => {
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
+  // ---------- Utils ----------
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  const pick=(arr)=>arr[(Math.random()*arr.length)|0];
+  const now=()=>performance.now();
 
-  const overlay = document.getElementById('overlay');
-  const startBtn = document.getElementById('startBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
-  const resetBtn = document.getElementById('resetBtn');
+  // ---------- Word Banks ----------
+  const EN_LETTERS = "ASDFGHJKLQWERTYUIOPZXCVBNM".split("");
 
-  const speedEl = document.getElementById('speed');
-  const rateEl = document.getElementById('rate');
-  const spdLabel = document.getElementById('spdLabel');
-  const rateLabel = document.getElementById('rateLabel');
+  // 常用汉字（偏工作&生活常见）
+  const ZH_CHARS = (
+    "趁热集合烘焙面包可颂吐司贝果奶油黄油发酵开酥烤箱醒发搅拌面团芝士蒜香蜂蜜爆浆" +
+    "门店排队上新预售核销团购直播种草达人点评抖音小红书会员券包复购转化数据预算" +
+    "品质出品标准高峰承接库存排产原料陈列热度口碑差评申诉合规效率增长"
+  ).split("");
 
-  const scoreEl = document.getElementById('score');
-  const comboEl = document.getElementById('combo');
-  const lifeEl  = document.getElementById('life');
-  const levelEl = document.getElementById('level');
+  // 甲方烘焙词库（你可以继续加）
+  const BAKERY_WORDS = [
+    // 产品/系列（可按你品牌 SKU 调整）
+    "酥皮烤肠卷","墨西哥辣椒酥皮烤肠卷","黑胡椒香肠酥皮卷",
+    "锅巴可颂","抹茶锅巴可颂","奥利奥锅巴可颂",
+    "爆浆蒜香蜂蜜吐司","趁热心动蛋挞","开心果草莓马卡龙","马卡龙",
+    "贝果","可颂","丹麦","吐司","法棍","蝴蝶酥","坚果棒",
+    // 原料/工艺
+    "黄油","奶油","酵母","发酵","醒发","开酥","层次","烘烤","出炉","现烤","爆浆",
+    "抹茶","奥利奥","芝士","蒜香","蜂蜜","开心果","草莓","黑胡椒","辣椒",
+    // 运营/甲方常用
+    "预售","上新","爆品","大牌日","代金券","核销率","转化率","复购率","客单价",
+    "达人","种草","探店","直播","投流","矩阵","选题","脚本","封面","完播率","互动率",
+    "门店承接","高峰承接","出品标准","培训SOP","排产","备货","库存","陈列","口碑",
+    "差评回复","申诉","合规","数据复盘","一城一方案","周周有爆品"
+  ];
 
-  let W=0, H=0, DPR=1;
+  const MODES = {
+    EN_LETTERS: { name:"英文 · 字母雨", type:"letters", bank: EN_LETTERS },
+    ZH_CHARS: { name:"中文 · 单字雨", type:"zh", bank: ZH_CHARS },
+    BAKERY_WORDS: { name:"烘焙甲方 · 词雨", type:"words", bank: BAKERY_WORDS }
+  };
 
-  function resize() {
-    DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    const rect = canvas.getBoundingClientRect();
-    W = Math.floor(rect.width * DPR);
-    H = Math.floor(rect.height * DPR);
-    canvas.width = W;
-    canvas.height = H;
-    ctx.setTransform(1,0,0,1,0,0);
+  // ---------- DOM ----------
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d");
+  const overlay = document.getElementById("overlay");
+  const btnGo = document.getElementById("btnGo");
+  const btnClose = document.getElementById("btnClose");
+  const btnMode = document.getElementById("btnMode");
+  const btnPause = document.getElementById("btnPause");
+  const btnReset = document.getElementById("btnReset");
+  const btnStart = document.getElementById("btnStart");
+  const btnEnter = document.getElementById("btnEnter");
+  const input = document.getElementById("input");
+
+  const modeLabel = document.getElementById("modeLabel");
+  const scoreLabel = document.getElementById("scoreLabel");
+  const comboLabel = document.getElementById("comboLabel");
+  const lifeLabel = document.getElementById("lifeLabel");
+  const hitLabel = document.getElementById("hitLabel");
+  const missLabel = document.getElementById("missLabel");
+  const spdLabel = document.getElementById("spdLabel");
+  const densLabel = document.getElementById("densLabel");
+  const statusDot = document.getElementById("statusDot");
+  const subTitle = document.getElementById("subTitle");
+
+  const rngSpeed = document.getElementById("rngSpeed");
+  const rngDensity = document.getElementById("rngDensity");
+  const rngLives = document.getElementById("rngLives");
+
+  const toast = document.getElementById("toast");
+  const toastT = document.getElementById("toastT");
+  const toastD = document.getElementById("toastD");
+
+  const showToast = (t,d) => {
+    toastT.textContent=t; toastD.textContent=d;
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t=setTimeout(()=>toast.classList.remove("show"), 1500);
+  };
+
+  // ---------- Canvas Resize ----------
+  let W=0,H=0, DPR=1;
+  function resize(){
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.floor(W*DPR);
+    cv.height = Math.floor(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
   }
-  window.addEventListener('resize', resize);
+  window.addEventListener("resize", resize);
 
-  // Game state
+  // ---------- Game State ----------
+  let modeKey = "BAKERY_WORDS";
   let running = false;
   let paused = false;
-  let over = false;
 
-  let score = 0;
-  let combo = 0;
-  let life  = 10;
-  let level = 1;
+  let speedMul = parseFloat(rngSpeed.value);
+  let densityMul = parseFloat(rngDensity.value);
+  let baseLives = parseInt(rngLives.value,10);
 
+  let score=0, combo=0, lives=baseLives, hit=0, miss=0;
   let drops = [];
-  let lastSpawn = 0;
-  let lastTime = 0;
+  let lastSpawn=0;
+  let tPrev=now();
 
-  // Tunables
-  let baseSpeed = 10; // range 6-20 (mapped)
-  let spawnEvery = 520; // ms 200-900
+  // drop structure
+  // {text, x, y, vy, size, w, h, glow, born, id}
+  let dropId=1;
 
-  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-  function randLetter(){
-    const code = randInt(65, 90); // A-Z
-    return String.fromCharCode(code);
+  function resetStats(){
+    score=0; combo=0; lives=baseLives; hit=0; miss=0;
+    drops.length=0;
+    updateHUD();
   }
 
-  function setLabels(){
-    const spd = Number(speedEl.value);
-    baseSpeed = spd;
-    spdLabel.textContent = (spd/10).toFixed(1) + "x";
-
-    const r = Number(rateEl.value);
-    spawnEvery = r;
-    let txt = "中";
-    if (r < 360) txt = "高";
-    else if (r > 700) txt = "低";
-    rateLabel.textContent = txt;
-  }
-  speedEl.addEventListener('input', setLabels);
-  rateEl.addEventListener('input', setLabels);
-
-  function syncHUD(){
-    scoreEl.textContent = score;
-    comboEl.textContent = combo;
-    lifeEl.textContent  = life;
-    levelEl.textContent = level;
+  function updateHUD(){
+    modeLabel.textContent = MODES[modeKey].name;
+    scoreLabel.textContent = String(score);
+    comboLabel.textContent = String(combo);
+    lifeLabel.textContent = String(lives);
+    hitLabel.textContent = String(hit);
+    missLabel.textContent = String(miss);
+    spdLabel.textContent = speedMul.toFixed(1) + "x";
+    densLabel.textContent = densityMul.toFixed(1) + "x";
+    subTitle.textContent = (MODES[modeKey].type==="words")
+      ? "烘焙甲方词库：产品/原料/运营一起下雨 ☔️"
+      : (MODES[modeKey].type==="zh" ? "中文输入法模式：输入后按回车更稳" : "英文热身：手速起飞");
+    statusDot.style.background = running && !paused ? "var(--good)" : (paused ? "var(--warn)" : "var(--muted)");
+    statusDot.style.boxShadow = running && !paused ? "0 0 0 6px rgba(45,227,138,.10)" :
+                               (paused ? "0 0 0 6px rgba(255,209,102,.10)" : "0 0 0 6px rgba(232,236,255,.08)");
   }
 
-  function resetGame(){
-    score = 0; combo = 0; life = 10; level = 1;
-    drops = [];
-    lastSpawn = 0;
-    lastTime = 0;
-    over = false;
-    paused = false;
-    running = false;
-    overlay.style.display = 'flex';
-    pauseBtn.textContent = '暂停';
-    syncHUD();
+  function setMode(key){
+    modeKey = key;
+    updateHUD();
+    showToast("已切换版本", MODES[modeKey].name);
   }
 
-  function startGame(){
-    if (running) return;
-    running = true;
-    paused = false;
-    over = false;
-    overlay.style.display = 'none';
-    lastTime = performance.now();
-    requestAnimationFrame(tick);
-  }
-
-  function togglePause(){
-    if (!running || over) return;
-    paused = !paused;
-    pauseBtn.textContent = paused ? '继续' : '暂停';
-    if (!paused) {
-      lastTime = performance.now();
-      requestAnimationFrame(tick);
-    }
-  }
-
-  function gameOver(){
-    over = true;
-    running = false;
-    overlay.style.display = 'flex';
-    overlay.querySelector('h1').textContent = '游戏结束';
-    overlay.querySelector('p').innerHTML =
-      `最终分数：<b>${score}</b>，最高连击：<b>${combo}</b><br/>点“开始”再来一局。`;
-  }
-
-  function maybeLevelUp(){
-    // 每 500 分升一级：增加速度、生成更密
-    const newLevel = Math.floor(score / 500) + 1;
-    if (newLevel !== level) {
-      level = newLevel;
-    }
+  // ---------- Spawn & Measure ----------
+  function measureText(text, size){
+    ctx.font = `${size}px ${MODES[modeKey].type==="letters" ? "var(--mono)" : "var(--sans)"}`;
+    const m = ctx.measureText(text);
+    const w = m.width;
+    const h = size;
+    return {w,h};
   }
 
   function spawnOne(){
-    // 生成：同一时刻可能有重复字母，属于常见“打字雨”体验
-    const ch = randLetter();
-    const size = randInt(26, 42) * DPR;
-    const x = randInt(20, Math.max(20, W - 20));
-    const y = -randInt(20, 80) * DPR;
-    const speed = ((baseSpeed / 10) * (1 + (level-1)*0.07)) * DPR; // px per frame-ish
-    drops.push({ ch, x, y, size, speed, born: performance.now() });
+    const conf = MODES[modeKey];
+    const text = pick(conf.bank);
+
+    // 词越长，字体稍微小一点，避免挤
+    let size = conf.type==="words" ? clamp(26 - (String(text).length-2)*2, 16, 26) : 26;
+    if(conf.type==="letters") size = 28;
+    if(conf.type==="zh") size = 28;
+
+    const {w,h} = measureText(text, size);
+    const margin = 16;
+    const x = rand(margin, Math.max(margin, W - w - margin));
+    const y = -rand(20, 140);
+
+    // 速度：基础 + 难度 + combo轻微加速
+    const base = 70 + (conf.type==="letters"? 10: 0);
+    const vy = (base + rand(0, 60)) * speedMul * (1 + combo*0.02);
+
+    drops.push({
+      id: dropId++,
+      text: String(text),
+      x, y, vy,
+      size,
+      w, h,
+      glow: rand(0.3, 0.8),
+      born: now()
+    });
   }
 
-  function handleKey(k){
-    if (over) return;
-    if (!running) return;
-    if (paused) return;
+  function spawnLoop(t){
+    // 密度：随时间略提升 + densityMul
+    const conf = MODES[modeKey];
+    const baseInterval = conf.type==="letters" ? 320 : (conf.type==="zh" ? 360 : 420);
+    const interval = baseInterval / densityMul / (1 + Math.min(0.6, combo*0.03));
+    if(t - lastSpawn > interval){
+      lastSpawn = t;
+      spawnOne();
+    }
+  }
 
-    const ch = (k || '').toUpperCase();
-    if (ch.length !== 1 || ch < 'A' || ch > 'Z') return;
+  // ---------- Hit / Miss ----------
+  function scoreFor(text){
+    // 词越长奖励越高
+    const len = String(text).length;
+    const base = 10;
+    return base + Math.min(60, len*8) + Math.min(40, combo*2);
+  }
 
-    // 找“最靠近地面”的匹配字母（更符合直觉）
-    let idx = -1;
-    let bestY = -Infinity;
-    for (let i=0;i<drops.length;i++){
-      if (drops[i].ch === ch && drops[i].y > bestY){
-        bestY = drops[i].y;
-        idx = i;
+  function tryHit(inputText){
+    const raw = (inputText ?? "").trim();
+    if(!raw) return false;
+
+    // 英文字母模式：只取最后一个字母也行
+    const conf = MODES[modeKey];
+    let token = raw;
+
+    if(conf.type==="letters"){
+      token = raw.slice(-1).toUpperCase();
+    }
+
+    // 找到最接近底部的匹配（更紧张好玩）
+    let idx=-1;
+    let bestY=-Infinity;
+    for(let i=0;i<drops.length;i++){
+      const d=drops[i];
+      if(d.text === token){
+        if(d.y > bestY){ bestY = d.y; idx=i; }
       }
     }
-    if (idx !== -1){
+
+    if(idx>=0){
       const d = drops[idx];
       drops.splice(idx,1);
 
-      combo += 1;
-      const gain = Math.floor(10 + combo * 1.5 + level * 2);
-      score += gain;
-      maybeLevelUp();
-      syncHUD();
+      hit++;
+      combo++;
+      const add = scoreFor(d.text);
+      score += add;
 
-      // 小爆炸
-      burst(d.x, d.y, d.size, true);
-    } else {
-      // 打空：断连击
-      combo = 0;
-      syncHUD();
-      burst(Math.random()*W, Math.random()*H*0.6, 24*DPR, false);
+      // 命中特效：toast + 轻微抖动
+      showToast("命中 +"+add, `「${d.text}」连击 ${combo}`);
+
+      updateHUD();
+      return true;
     }
+
+    return false;
   }
 
-  window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') { e.preventDefault(); togglePause(); return; }
-    if (e.key === 'r' || e.key === 'R') { resetGame(); startGame(); return; }
-    handleKey(e.key);
-  });
-
-  // 粒子
-  let particles = [];
-  function burst(x,y,size,good){
-    const n = good ? 14 : 8;
-    for (let i=0;i<n;i++){
-      const a = Math.random()*Math.PI*2;
-      const v = (Math.random()*2 + 1) * (good ? 1.8 : 1.2) * DPR;
-      particles.push({
-        x, y,
-        vx: Math.cos(a)*v,
-        vy: Math.sin(a)*v,
-        life: 400 + Math.random()*200,
-        born: performance.now(),
-        r: (Math.random()*2 + 1) * DPR,
-        good
-      });
+  function onMiss(){
+    miss++;
+    lives--;
+    combo = 0;
+    showToast("漏掉 -1 生命", "连击清空，稳住再来");
+    if(lives<=0){
+      running = false;
+      paused = false;
+      showOverlay(`游戏结束 · 得分 ${score}`, `命中 ${hit} / 漏掉 ${miss}。要不再来一把？`);
     }
+    updateHUD();
   }
 
+  // ---------- Render ----------
   function drawBG(t){
-    // 星空渐变
+    // subtle moving stars
+    ctx.clearRect(0,0,W,H);
     const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0, 'rgba(18, 28, 62, 1)');
-    g.addColorStop(1, 'rgba(9, 12, 26, 1)');
-    ctx.fillStyle = g;
+    g.addColorStop(0,"rgba(0,0,0,.0)");
+    g.addColorStop(1,"rgba(0,0,0,.22)");
+    ctx.fillStyle=g;
     ctx.fillRect(0,0,W,H);
 
-    // 轻微噪点星点
-    ctx.globalAlpha = 0.12;
-    for (let i=0;i<60;i++){
-      const x = (Math.sin((t/800)+i)*0.5+0.5) * W;
-      const y = (Math.cos((t/900)+i*1.7)*0.5+0.5) * H;
+    // grid-ish shimmer
+    ctx.save();
+    ctx.globalAlpha=0.06;
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=1;
+    const step=52;
+    const off=(t*0.02)%step;
+    for(let x= -step; x<W+step; x+=step){
       ctx.beginPath();
-      ctx.arc(x,y, (i%3+1)*DPR, 0, Math.PI*2);
-      ctx.fillStyle = 'white';
-      ctx.fill();
+      ctx.moveTo(x+off,0);
+      ctx.lineTo(x+off,H);
+      ctx.stroke();
     }
-    ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
-  function drawDrops(){
-    for (const d of drops){
-      // glow
-      ctx.save();
-      ctx.font = `${d.size}px ui-monospace, Menlo, Consolas, monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+  function drawDrop(d){
+    const conf = MODES[modeKey];
+    ctx.save();
 
-      ctx.shadowColor = 'rgba(120, 170, 255, .55)';
-      ctx.shadowBlur = 18 * DPR;
-      ctx.fillStyle = 'rgba(232, 236, 255, .96)';
-      ctx.fillText(d.ch, d.x, d.y);
+    // glow shadow
+    ctx.globalAlpha = 0.95;
+    ctx.shadowColor = conf.type==="words" ? "rgba(45,227,138,.35)" :
+                      conf.type==="zh" ? "rgba(122,98,255,.35)" :
+                      "rgba(255,255,255,.25)";
+    ctx.shadowBlur = 18 + d.glow*18;
 
-      ctx.restore();
-    }
-  }
+    ctx.font = `${d.size}px ${conf.type==="letters" ? "var(--mono)" : "var(--sans)"}`;
+    ctx.textBaseline="top";
 
-  function drawGround(){
-    const h = 6*DPR;
-    const y = H - h;
-    ctx.fillStyle = 'rgba(255,255,255,.08)';
-    ctx.fillRect(0, y, W, h);
-    ctx.fillStyle = 'rgba(120,170,255,.28)';
-    ctx.fillRect(0, y, W, 1*DPR);
-  }
+    // color based on danger level (closer to bottom => warmer)
+    const danger = clamp(d.y / (H*0.85), 0, 1);
+    const r = Math.floor(232 + danger*20);
+    const g = Math.floor(236 - danger*80);
+    const b = Math.floor(255 - danger*60);
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
 
-  function drawParticles(now){
-    particles = particles.filter(p => (now - p.born) < p.life);
-    for (const p of particles){
-      const age = (now - p.born);
-      const k = 1 - age / p.life;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.02*DPR; // gravity
+    ctx.fillText(d.text, d.x, d.y);
 
-      ctx.globalAlpha = 0.8 * k;
+    // underline hint for long words
+    if(conf.type==="words" && d.text.length>=4){
+      ctx.globalAlpha=0.45;
+      ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,255,255,.28)";
+      ctx.lineWidth=1;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fillStyle = p.good ? 'rgba(140, 200, 255, 1)' : 'rgba(255, 170, 170, 1)';
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      ctx.moveTo(d.x, d.y + d.size + 2);
+      ctx.lineTo(d.x + d.w, d.y + d.size + 2);
+      ctx.stroke();
     }
+
+    ctx.restore();
   }
 
-  function tick(now){
-    if (!running || paused) return;
+  function render(t){
+    const dt = (t - tPrev)/1000;
+    tPrev = t;
 
-    const dt = Math.min(32, now - lastTime); // ms
-    lastTime = now;
+    drawBG(t);
 
-    // spawn
-    lastSpawn += dt;
-    const effectiveEvery = Math.max(140, spawnEvery - (level-1)*18); // level越高越密
-    while (lastSpawn >= effectiveEvery){
-      lastSpawn -= effectiveEvery;
-      spawnOne();
-      if (Math.random() < 0.12 + level*0.01) spawnOne(); // 偶尔双发
-    }
+    if(running && !paused){
+      spawnLoop(t);
 
-    // update
-    const fall = (dt / 16.67); // frame factor
-    for (const d of drops){
-      d.y += d.speed * fall * 6.2; // 调一调手感
-    }
+      // update drops
+      for(let i=drops.length-1;i>=0;i--){
+        const d = drops[i];
+        d.y += d.vy * dt;
 
-    // hit ground
-    const groundY = H - 6*DPR;
-    let missed = 0;
-    drops = drops.filter(d => {
-      if (d.y >= groundY){
-        missed++;
-        burst(d.x, groundY, 22*DPR, false);
-        return false;
+        // miss line
+        if(d.y > H - 36){
+          drops.splice(i,1);
+          onMiss();
+          continue;
+        }
       }
-      return true;
-    });
+    }
 
-    if (missed > 0){
-      life -= missed;
-      combo = 0;
-      if (life <= 0){
-        life = 0;
-        syncHUD();
-        render(now);
-        gameOver();
-        return;
+    // draw drops
+    for(const d of drops) drawDrop(d);
+
+    // ground line
+    ctx.save();
+    ctx.globalAlpha=0.18;
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(0, H-28);
+    ctx.lineTo(W, H-28);
+    ctx.stroke();
+    ctx.restore();
+
+    requestAnimationFrame(render);
+  }
+
+  // ---------- Overlay helpers ----------
+  function showOverlay(title, desc){
+    overlay.style.display="flex";
+    overlay.querySelector("h1").textContent = title;
+    overlay.querySelector("p").textContent = desc;
+  }
+  function hideOverlay(){ overlay.style.display="none"; }
+
+  // ---------- Controls ----------
+  function startGame(){
+    if(!running){
+      resetStats();
+      running = true;
+      paused = false;
+      hideOverlay();
+      showToast("开局！", MODES[modeKey].name);
+    }else{
+      paused = false;
+      hideOverlay();
+    }
+    updateHUD();
+    input.focus();
+  }
+
+  function togglePause(){
+    if(!running) return;
+    paused = !paused;
+    showToast(paused ? "暂停" : "继续", paused ? "喝口水再战" : "冲！");
+    updateHUD();
+  }
+
+  function resetGame(){
+    running=false; paused=false;
+    drops.length=0;
+    resetStats();
+    showOverlay("选择你的版本：打字雨怎么玩", "你可以随时切换版本（M）。命中加分，漏掉扣生命。");
+    updateHUD();
+  }
+
+  // Enter confirm
+  function confirmInput(){
+    if(!running || paused) return;
+    const v = input.value;
+    const ok = tryHit(v);
+    if(ok){
+      input.value = "";
+    }else{
+      // 英文模式：允许继续累积，不强制清空
+      if(MODES[modeKey].type !== "letters"){
+        showToast("未命中", "再对准一次（中文建议回车确认）");
       }
-      syncHUD();
-    }
-
-    render(now);
-    requestAnimationFrame(tick);
-  }
-
-  function render(now){
-    drawBG(now);
-    drawGround();
-    drawDrops();
-    drawParticles(now);
-
-    // 小提示（暂停/未开始）
-    if (!running && !over){
-      ctx.globalAlpha = 0.8;
-      ctx.fillStyle = 'rgba(255,255,255,.85)';
-      ctx.font = `${14*DPR}px ui-sans-serif, system-ui`;
-      ctx.textAlign = 'left';
-      ctx.fillText('点击开始，或按 Space 暂停 / R 重开', 14*DPR, 22*DPR);
-      ctx.globalAlpha = 1;
     }
   }
 
-  // UI bindings
-  startBtn.addEventListener('click', () => {
-    // 恢复标题（如果上次 game over 改过）
-    overlay.querySelector('h1').textContent = '打字雨 Typing Rain';
-    overlay.querySelector('p').innerHTML =
-      '字母会从天上掉下来，在落地前按下对应字母即可消除并得分。<br/>' +
-      '<span class="warn">注意：</span>必须用英文键盘输入（A-Z），不区分大小写。';
-    setLabels();
-    if (!running) startGame();
+  // Auto-match on input for letters (更爽)
+  input.addEventListener("input", () => {
+    const conf = MODES[modeKey];
+    if(!running || paused) return;
+    if(conf.type==="letters"){
+      const v = input.value;
+      const ok = tryHit(v);
+      if(ok) input.value="";
+      else if(v.length>2) input.value = v.slice(-2);
+    }
   });
-  pauseBtn.addEventListener('click', togglePause);
-  resetBtn.addEventListener('click', () => { resetGame(); setLabels(); render(performance.now()); });
+
+  // IME composition guard
+  let composing=false;
+  input.addEventListener("compositionstart", ()=>composing=true);
+  input.addEventListener("compositionend", ()=>composing=false);
+
+  input.addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){
+      if(composing) return;
+      e.preventDefault();
+      confirmInput();
+    }
+  });
+
+  btnEnter.addEventListener("click", confirmInput);
+
+  // header buttons
+  btnStart.addEventListener("click", startGame);
+  btnPause.addEventListener("click", togglePause);
+  btnReset.addEventListener("click", resetGame);
+
+  btnMode.addEventListener("click", () => {
+    overlay.style.display="flex";
+  });
+
+  // overlay buttons
+  btnClose.addEventListener("click", hideOverlay);
+  btnGo.addEventListener("click", startGame);
+
+  document.querySelectorAll(".modeBtn").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      setMode(b.dataset.mode);
+    });
+  });
+
+  // sliders
+  function syncSettings(){
+    speedMul = parseFloat(rngSpeed.value);
+    densityMul = parseFloat(rngDensity.value);
+    baseLives = parseInt(rngLives.value,10);
+    // 如果未开局，实时反映生命
+    if(!running){
+      lives = baseLives;
+      updateHUD();
+    }
+    updateHUD();
+  }
+  rngSpeed.addEventListener("input", syncSettings);
+  rngDensity.addEventListener("input", syncSettings);
+  rngLives.addEventListener("input", syncSettings);
+
+  // keyboard shortcuts
+  window.addEventListener("keydown", (e)=>{
+    if(e.key === " "){
+      e.preventDefault();
+      if(running) togglePause();
+      else startGame();
+    }else if(e.key.toLowerCase() === "r"){
+      resetGame();
+    }else if(e.key.toLowerCase() === "m"){
+      overlay.style.display="flex";
+    }
+  });
 
   // init
   resize();
-  setLabels();
+  setMode(modeKey);
   resetGame();
-  render(performance.now());
+  requestAnimationFrame(render);
 })();
 </script>
 </body>
